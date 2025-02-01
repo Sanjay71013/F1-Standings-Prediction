@@ -9,7 +9,7 @@ def fetch_race_data(season, round_number):
     response = requests.get(url)
     if response.status_code == 200:
         races = response.json()["MRData"]["RaceTable"]["Races"]
-        if races:  # Ensure the Races list is not empty
+        if races:  # Ensuring the Races list is not empty
             return races[0]
         else:
             print(f"[INFO] No race data found for Season {season}, Round {round_number}. Skipping...")
@@ -27,7 +27,7 @@ def fetch_driver_standings(season, round_number):
     response = requests.get(url)
     if response.status_code == 200:
         data = response.json()["MRData"]["StandingsTable"]["StandingsLists"]
-        # Ensure data is present
+        # Ensuring data is present
         if data and len(data) > 0:
             return data[0]["DriverStandings"]
     return []
@@ -117,14 +117,14 @@ def fetch_pitstops(season, round_number, driver_id):
 def main():
     all_race_data = []
 
-    # Define the range of seasons (Example: 2010 to 2024)
+    # Defining the range of seasons
     start_season = 2010
     end_season = 2024
 
     for season in range(start_season, end_season + 1):
         for round_number in range(1, 30):  # Assuming a max of 30 rounds per season
             race = fetch_race_data(season, round_number)
-            if not race:  # Skip if no race data is found
+            if not race:  # Skipping if no race data is found
                 continue
 
             race_name = race["raceName"]
@@ -132,13 +132,13 @@ def main():
             location = race["Circuit"]["Location"]["locality"]
             race_date = race["date"]
 
-            # Fetch the race results
+            # Fetching the race results
             race_results = fetch_race_results(season, round_number)
 
-            # Fetch the driver standings for that round
+            # Fetching the driver standings for that round
             standings = fetch_driver_standings(season, round_number)
 
-            # Fetch the qualifying results for that round
+            # Fetching the qualifying results for that round
             qualifying_data = fetch_qualifying_results(season, round_number)
 
             for result in race_results:
@@ -146,20 +146,20 @@ def main():
                 constructor = result["Constructor"]
                 driver_id = driver["driverId"]
 
-                # Match the driver in the standings
+                # Matching the driver in the standings
                 driver_standing = next(
                     (s for s in standings if s["Driver"]["driverId"] == driver_id),
                     None
                 )
 
-                # Qualifying info
+                # Extracting Qualifying info
                 qual_info = qualifying_data.get(driver_id, {})
                 qual_position = qual_info.get("position", "N/A")
                 q1_time = qual_info.get("Q1", "N/A")
                 q2_time = qual_info.get("Q2", "N/A")
                 q3_time = qual_info.get("Q3", "N/A")
 
-                # Pitstop info
+                # Extracting Pitstop info
                 pitstops = fetch_pitstops(season, round_number, driver_id)
                 num_pitstops = len(pitstops)
                 pitstop_details = "; ".join([
@@ -167,20 +167,14 @@ def main():
                     for p in pitstops
                 ]) if pitstops else "No Pitstops"
 
-                
-                # You can store pitstop details in many ways; for example:
-                # - just the count (num_pitstops)
-                # - or a concatenated string of each stop's lap/time/duration.
-                # Below is an example of the latter:
                 pitstop_details = "; ".join([
                     f"Stop {p['stop']} @Lap {p['lap']} (Duration={p['duration']}s)"
                     for p in pitstops
                 ]) if pitstops else "No Pitstops"
 
-                # In-race finishing status is typically in result["status"]
                 finishing_status = result["status"]
 
-                # Build a row with all the data
+                # Building a row with all the data
                 all_race_data.append({
                     "Season": season,
                     "Round": round_number,
@@ -214,7 +208,7 @@ def main():
                 })
         print("Collected data for Season - ", season)
 
-    # Save the collected data to a CSV
+    # Saving the collected data to a CSV
     df = pd.DataFrame(all_race_data)
     df.to_csv("f1_enhanced_race_data_final.csv", index=False)
     print("Enhanced race data saved to 'f1_enhanced_race_data_final.csv'.")
